@@ -107,7 +107,7 @@ if [ -n "$SYSTEM" -a "$SYSTEM" != "schedule" -a "$SYSTEM" != "retry" ] ; then
 fi
 
 if [ ! -z "$PASS"  ]; then
-  PASS="-a $PASS"
+  export REDISCLI_AUTH="$PASS"
 fi
 
 if [ ! -z "$NAMESPACE"  ]; then
@@ -115,22 +115,22 @@ if [ ! -z "$NAMESPACE"  ]; then
 fi
 
 if [ -n "$SYSTEM" ]; then
-  QUEUE_SIZE=`redis-cli -h $HOST -p $PORT $PASS -n $DB zcard ${NAMESPACE}$SYSTEM 2>$ERR | cut -d " " -f 1`
+  QUEUE_SIZE=`redis-cli -h $HOST -p $PORT -n $DB zcard ${NAMESPACE}$SYSTEM 2>$ERR | cut -d " " -f 1`
   QUEUE=$SYSTEM
 elif [ "$QUEUE" == "all" ]; then
-  ALL_QUEUES=`redis-cli -h $HOST -p $PORT $PASS -n $DB smembers queues 2>$ERR`
+  ALL_QUEUES=`redis-cli -h $HOST -p $PORT -n $DB smembers queues 2>$ERR`
   QUEUE_SIZE=-1
   QUEUE="none"
   for EACH_QUEUE in $ALL_QUEUES; do
     [[ "$IGNORE_QUEUES" == *"$EACH_QUEUE"* ]] && continue
-    THIS_QUEUE_SIZE=`redis-cli -h $HOST -p $PORT $PASS -n $DB llen ${NAMESPACE}queue:$EACH_QUEUE 2>$ERR | cut -d " " -f 1`
+    THIS_QUEUE_SIZE=`redis-cli -h $HOST -p $PORT -n $DB llen ${NAMESPACE}queue:$EACH_QUEUE 2>$ERR | cut -d " " -f 1`
     if [ "$THIS_QUEUE_SIZE" -gt "$QUEUE_SIZE" ]; then
       QUEUE_SIZE=$THIS_QUEUE_SIZE
       QUEUE=$EACH_QUEUE
     fi
   done
 else
-  QUEUE_SIZE=`redis-cli -h $HOST -p $PORT $PASS -n $DB llen ${NAMESPACE}queue:$QUEUE 2>$ERR | cut -d " " -f 1`
+  QUEUE_SIZE=`redis-cli -h $HOST -p $PORT -n $DB llen ${NAMESPACE}queue:$QUEUE 2>$ERR | cut -d " " -f 1`
 fi
 
 if [ -s "$ERR" ];  then
